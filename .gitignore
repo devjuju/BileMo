@@ -1,0 +1,85 @@
+######################################
+# 🧱 Symfony
+######################################
+
+/vendor/
+/var/
+/public/bundles/
+
+# Environnement
+.env
+.env.local
+.env.*.local
+.env.local.php
+
+# Secrets Symfony
+/config/secrets/prod/prod.decrypt.private.php
+
+######################################
+# 🔐 JWT (Lexik)
+######################################
+
+/config/jwt/*.pem
+
+######################################
+# 🧪 PHPUnit
+######################################
+
+/phpunit.xml
+/.phpunit.cache/
+
+######################################
+# 🎨 Assets (Symfony Asset Mapper)
+######################################
+
+/public/assets/
+/assets/vendor/
+
+######################################
+# 🐳 Docker
+######################################
+
+# Volumes base de données (CRITIQUE)
+/mysql/
+
+# Fichiers override locaux
+docker-compose.override.yml
+
+# Logs Docker
+*.log
+
+######################################
+# 🗄️ Base de données (sécurité)
+######################################
+
+*.sql
+*.sqlite
+
+######################################
+# 🧠 IDE / OS
+######################################
+
+# VS Code
+.vscode/
+
+# PHPStorm
+.idea/
+
+# Mac
+.DS_Store
+
+# Windows
+Thumbs.db
+
+######################################
+# ⚙️ Node (si utilisé)
+######################################
+
+/node_modules/
+
+######################################
+# 🔥 Divers
+######################################
+
+*.env.backup
+*.env.old
