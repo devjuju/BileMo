@@ -25,7 +25,12 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
 
 RUN a2enmod rewrite headers
 
+# Symfony
 WORKDIR /var/www
+
+# IMPORTANT
+RUN sed -i 's|/var/www/html|/var/www/public|g' /etc/apache2/sites-available/000-default.conf
+RUN sed -i 's|/var/www/html|/var/www/public|g' /etc/apache2/apache2.conf
 
 RUN curl -sS https://getcomposer.org/installer \
     | php -- --install-dir=/usr/local/bin --filename=composer
