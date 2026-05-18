@@ -1,11 +1,14 @@
-# yaml-language-server: $schema=../vendor/symfony/routing/Loader/schema/routing.schema.json
+# =========================================
+# ROUTING PRINCIPAL - APPLICATION SYMFONY
+# =========================================
 
-# This file is the entry point to configure the routes of your app.
-# Methods with the #[Route] attribute are automatically imported.
-# See also https://symfony.com/doc/current/routing.html
-
-# To list all registered routes, run the following command:
-#   bin/console debug:router
-
+# Import automatique des controllers avec attributes
 controllers:
-    resource: routing.controllers
+    resource: ../src/Controller/
+    type: attribute
+
+# =========================================
+# AUTH / LOGIN API (JWT ou autre auth)
+# =========================================
+api_login_check:
+    path: /api/login_check
