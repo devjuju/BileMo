@@ -3,14 +3,19 @@
 namespace App\Entity;
 
 use App\Repository\ClientRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 #[ORM\Entity(repositoryClass: ClientRepository::class)]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
+#[ORM\HasLifecycleCallbacks]
 class Client implements UserInterface, PasswordAuthenticatedUserInterface
 {
+    use Timestampable;
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -32,10 +37,18 @@ class Client implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $password = null;
 
     #[ORM\Column(length: 255)]
-    private ?string $compagny = null;
-
-    #[ORM\Column(length: 255)]
     private ?string $company = null;
+
+    /**
+     * @var Collection<int, User>
+     */
+    #[ORM\OneToMany(targetEntity: User::class, mappedBy: 'client')]
+    private Collection $users;
+
+    public function __construct()
+    {
+        $this->users = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -118,17 +131,6 @@ class Client implements UserInterface, PasswordAuthenticatedUserInterface
         // @deprecated, to be removed when upgrading to Symfony 8
     }
 
-    public function getCompagny(): ?string
-    {
-        return $this->compagny;
-    }
-
-    public function setCompagny(string $compagny): static
-    {
-        $this->compagny = $compagny;
-
-        return $this;
-    }
 
     public function getCompany(): ?string
     {
@@ -138,6 +140,36 @@ class Client implements UserInterface, PasswordAuthenticatedUserInterface
     public function setCompany(string $company): static
     {
         $this->company = $company;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, User>
+     */
+    public function getUsers(): Collection
+    {
+        return $this->users;
+    }
+
+    public function addUser(User $user): static
+    {
+        if (!$this->users->contains($user)) {
+            $this->users->add($user);
+            $user->setClient($this);
+        }
+
+        return $this;
+    }
+
+    public function removeUser(User $user): static
+    {
+        if ($this->users->removeElement($user)) {
+            // set the owning side to null (unless already changed)
+            if ($user->getClient() === $this) {
+                $user->setClient(null);
+            }
+        }
 
         return $this;
     }
