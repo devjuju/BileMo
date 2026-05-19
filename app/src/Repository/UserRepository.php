@@ -26,6 +26,17 @@ class UserRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    public function findOneForClient(int $id, Client $client): ?User
+    {
+        return $this->createQueryBuilder('u')
+            ->andWhere('u.id = :id')
+            ->andWhere('u.client = :client')
+            ->setParameter('id', $id)
+            ->setParameter('client', $client)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
     //    /**
     //     * @return User[] Returns an array of User objects
     //     */

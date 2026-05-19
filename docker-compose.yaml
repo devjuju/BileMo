@@ -1,11 +1,11 @@
 services:
   php:
-    build: # Fabrique une image à partir d'un Dockerfile
-      context: ./php # context = endroit où se trouve Dockerfile pour PHP
+    build:
+      context: ./php
     container_name: containernamebilemophp
     working_dir: /var/www
     ports:
-      - 8496:80 # 8080 port externe, 80 port dans l'image (EXPOSE 80)
+      - 8496:80
     volumes:
       - ./apache/default.conf:/etc/apache2/sites-enabled/000-default.conf
       - ./app:/var/www
@@ -14,23 +14,26 @@ services:
     image: mysql:8.0
     container_name: containernamebilemoapidb
     environment:
-      MYSQL_ROOT_PASSWORD: bilemo_root_password # paramètre obligatoire, mot de passe d'administration de mysql
-      MYSQL_DATABASE: bilemo_the_db # Nom de la base de données
-      MYSQL_USER: bilemo_the_user_db # On met ce qu'on veut
-      MYSQL_PASSWORD: bilemo_the_password # On met ce qu'on veut
+      MYSQL_ROOT_PASSWORD: bilemo_root_password
+      MYSQL_DATABASE: bilemo_the_db
+      MYSQL_USER: bilemo_the_user_db
+      MYSQL_PASSWORD: bilemo_the_password
     ports:
-      - "4436:3306" # EXPOSE 3306
+      - "4436:3306"
     volumes:
-      - ./mysql:/var/lib/mysql
+      - mysql_data:/var/lib/mysql
 
   phpmyadmin:
     image: phpmyadmin
     container_name: containernamebilemophpmyadmin
     environment:
-      PMA_HOST: database # Nom du service de base de données
+      PMA_HOST: database
       PMA_USER: root
-      PMA_PASSWORD: bilemo_root_password # MYSQL_ROOT_PASSWORD
+      PMA_PASSWORD: bilemo_root_password
     ports:
-      - 8495:80 # EXPOSE 80
+      - 8495:80
     depends_on:
-      - database # Démarre APRES database
+      - database
+
+volumes:
+  mysql_data:
