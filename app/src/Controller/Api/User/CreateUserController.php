@@ -9,38 +9,49 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Bundle\SecurityBundle\Security;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class CreateUserController extends AbstractController
 {
     #[Route('/api/users', name: 'api_users_create', methods: ['POST'])]
-    public function __invoke(
+    public function create(
         Request $request,
         EntityManagerInterface $em,
-        Security $security
+        Security $security,
+        ValidatorInterface $validator
     ): JsonResponse {
+        /** @var \App\Entity\Client $client */
         $client = $security->getUser();
-
-        if (!$client) {
-            return $this->json(['message' => 'Unauthorized'], 401);
-        }
 
         $data = json_decode($request->getContent(), true);
 
-        if (
-            empty($data['email']) ||
-            empty($data['firstname']) ||
-            empty($data['lastname'])
-        ) {
+        if (!$data) {
             return $this->json([
-                'message' => 'Invalid data'
+                'message' => 'Invalid JSON'
             ], 400);
         }
 
         $user = new User();
-        $user->setEmail($data['email']);
-        $user->setFirstname($data['firstname']);
-        $user->setLastname($data['lastname']);
+        $user->setEmail($data['email'] ?? '');
+        $user->setFirstname($data['firstname'] ?? '');
+        $user->setLastname($data['lastname'] ?? '');
         $user->setClient($client);
+
+        $violations = $validator->validate($user);
+
+        if (count($violations) > 0) {
+            $errors = [];
+
+            foreach ($violations as $violation) {
+                $errors[$violation->getPropertyPath()] = $violation->getMessage();
+            }
+
+            return $this->json([
+                'status' => 400,
+                'message' => 'Validation failed',
+                'errors' => $errors,
+            ], 400);
+        }
 
         $em->persist($user);
         $em->flush();
