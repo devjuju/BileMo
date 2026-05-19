@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\UserRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\HasLifecycleCallbacks]
@@ -15,6 +16,7 @@ class User
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['user:detail'])]
     private ?int $id = null;
 
     #[Assert\NotBlank(message: 'Le prénom est obligatoire')]
@@ -24,6 +26,7 @@ class User
         minMessage: 'Le prénom doit faire au moins {{ limit }} caractères'
     )]
     #[ORM\Column(length: 255)]
+    #[Groups(['user:list', 'user:detail'])]
     private ?string $firstname = null;
 
     #[Assert\NotBlank(message: 'Le nom est obligatoire')]
@@ -33,11 +36,13 @@ class User
         minMessage: 'Le nom doit faire au moins {{ limit }} caractères'
     )]
     #[ORM\Column(length: 255)]
+    #[Groups(['user:list', 'user:detail'])]
     private ?string $lastname = null;
 
     #[Assert\NotBlank(message: 'L\'email est obligatoire')]
     #[Assert\Email(message: 'Format d\'email invalide')]
     #[ORM\Column(length: 255)]
+    #[Groups(['user:detail'])]
     private ?string $email = null;
 
 

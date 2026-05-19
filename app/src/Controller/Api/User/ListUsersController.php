@@ -30,21 +30,16 @@ class ListUsersController extends AbstractController
             $offset
         );
 
-        $data = [];
-
-        foreach ($users as $user) {
-            $data[] = [
-                'id' => $user->getId(),
-                'firstname' => $user->getFirstname(),
-                'lastname' => $user->getLastname(),
-                'email' => $user->getEmail(),
-            ];
-        }
+        $total = $repository->count(['client' => $client]);
 
         return $this->json([
             'page' => $page,
             'limit' => $limit,
-            'data' => $data
+            'total_items' => $total,
+            'total_pages' => ceil($total / $limit),
+            'data' => $users
+        ], 200, [], [
+            'groups' => 'user:list'
         ]);
     }
 }

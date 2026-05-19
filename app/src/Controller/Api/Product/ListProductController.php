@@ -18,32 +18,25 @@ final class ListProductController extends AbstractController
         $page = $request->query->getInt('page', 1);
         $limit = 5;
 
+        $offset = ($page - 1) * $limit;
+
         $products = $productRepository->findBy(
             [],
             null,
             $limit,
-            ($page - 1) * $limit
+            $offset
         );
 
-        $data = [];
-
-        foreach ($products as $product) {
-            $data[] = [
-                'id' => $product->getId(),
-                'name' => $product->getName(),
-                'brand' => $product->getBrand(),
-                'price' => $product->getPrice(),
-                'stock' => $product->getStock(),
-                'color' => $product->getColor(),
-                'storage' => $product->getStorage(),
-                'screenSize' => $product->getScreenSize(),
-            ];
-        }
+        $total = $productRepository->count([]);
 
         return $this->json([
             'page' => $page,
             'limit' => $limit,
-            'data' => $data
+            'total_items' => $total,
+            'total_pages' => ceil($total / $limit),
+            'data' => $products
+        ], 200, [], [
+            'groups' => 'product:list'
         ]);
     }
 }

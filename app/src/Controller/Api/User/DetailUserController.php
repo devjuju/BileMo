@@ -27,11 +27,11 @@ final class DetailUserController extends AbstractController
             ], 404);
         }
 
-        return $this->json([
-            'id' => $user->getId(),
-            'firstname' => $user->getFirstname(),
-            'lastname' => $user->getLastname(),
-            'email' => $user->getEmail(),
-        ]);
+        return $this->json(
+            $user,
+            200,
+            [],
+            ['groups' => 'user:detail']
+        );
     }
 }

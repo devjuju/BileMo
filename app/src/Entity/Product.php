@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\ProductRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: ProductRepository::class)]
 #[ORM\HasLifecycleCallbacks]
@@ -15,30 +16,39 @@ class Product
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['product:list', 'product:detail'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Groups(['product:list', 'product:detail'])]
     private ?string $name = null;
 
     #[ORM\Column(length: 100)]
+    #[Groups(['product:list', 'product:detail'])]
     private ?string $brand = null;
 
     #[ORM\Column(type: Types::TEXT)]
+    #[Groups(['product:detail'])]
     private ?string $description = null;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
+    #[Groups(['product:list', 'product:detail'])]
     private ?string $price = null;
 
     #[ORM\Column]
+    #[Groups(['product:detail'])]
     private ?int $stock = null;
 
     #[ORM\Column(length: 50)]
+    #[Groups(['product:list', 'product:detail'])]
     private ?string $color = null;
 
     #[ORM\Column(length: 50)]
+    #[Groups(['product:list', 'product:detail'])]
     private ?string $storage = null;
 
     #[ORM\Column]
+    #[Groups(['product:detail'])]
     private ?float $screenSize = null;
 
     public function getId(): ?int
