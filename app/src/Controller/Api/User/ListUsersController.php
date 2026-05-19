@@ -2,7 +2,6 @@
 
 namespace App\Controller\Api\User;
 
-use App\Entity\Client;
 use App\Repository\UserRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
