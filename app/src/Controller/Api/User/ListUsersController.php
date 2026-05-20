@@ -2,6 +2,8 @@
 
 namespace App\Controller\Api\User;
 
+use App\Entity\Client;
+use App\Entity\User;
 use App\Repository\UserRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -17,6 +19,7 @@ class ListUsersController extends AbstractController
         Security $security,
         Request $request
     ): JsonResponse {
+        /** @var Client $client */
         $client = $security->getUser();
 
         $page = $request->query->getInt('page', 1);
@@ -30,9 +33,11 @@ class ListUsersController extends AbstractController
             $offset
         );
 
-        $total = $repository->count(['client' => $client]);
+        $total = $repository->count([
+            'client' => $client
+        ]);
 
-        return $this->json([
+        $response = $this->json([
             'page' => $page,
             'limit' => $limit,
             'total_items' => $total,
@@ -41,5 +46,34 @@ class ListUsersController extends AbstractController
         ], 200, [], [
             'groups' => 'user:list'
         ]);
+
+        /*
+         * CACHE HTTP
+         */
+
+        // cache privé car dépend du client connecté
+        $response->setPrivate();
+
+        // durée du cache : 30 sec
+        $response->setMaxAge(30);
+
+        // ETag unique
+        $etag = md5(
+            $client->getId()
+                . $page
+                . implode(',', array_map(
+                    fn(User $u) => $u->getId(),
+                    $users
+                ))
+        );
+
+        $response->setEtag($etag);
+
+        // retourne 304 si pas modifié
+        if ($response->isNotModified($request)) {
+            return $response;
+        }
+
+        return $response;
     }
 }
