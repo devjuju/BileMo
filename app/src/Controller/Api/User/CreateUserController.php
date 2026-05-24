@@ -2,8 +2,10 @@
 
 namespace App\Controller\Api\User;
 
+use App\Application\Command\User\CreateUserCommand;
+use App\Application\Handler\User\CreateUserHandler;
+use App\Entity\Client;
 use App\Entity\User;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -11,25 +13,32 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
-class CreateUserController extends AbstractController
+final class CreateUserController extends AbstractController
 {
     #[Route('/api/users', name: 'api_users_create', methods: ['POST'])]
-    public function create(
+    public function __invoke(
         Request $request,
-        EntityManagerInterface $em,
         Security $security,
-        ValidatorInterface $validator
+        ValidatorInterface $validator,
+        CreateUserHandler $handler
     ): JsonResponse {
-        /** @var \App\Entity\Client $client */
+        /** @var Client $client */
         $client = $security->getUser();
 
-        $data = json_decode($request->getContent(), true);
+        $data = json_decode(
+            $request->getContent(),
+            true
+        );
 
         if (!$data) {
             return $this->json([
                 'message' => 'Invalid JSON'
             ], 400);
         }
+
+        /*
+         * Validation
+         */
 
         $user = new User();
         $user->setEmail($data['email'] ?? '');
@@ -49,18 +58,30 @@ class CreateUserController extends AbstractController
             return $this->json([
                 'status' => 400,
                 'message' => 'Validation failed',
-                'errors' => $errors,
+                'errors' => $errors
             ], 400);
         }
 
-        $em->persist($user);
-        $em->flush();
+        /*
+         * CQRS Command
+         */
+
+        $command = new CreateUserCommand(
+            $data['email'],
+            $data['firstname'],
+            $data['lastname'],
+            $client
+        );
+
+        $createdUser = $handler->handle(
+            $command
+        );
 
         return $this->json([
-            'id' => $user->getId(),
-            'email' => $user->getEmail(),
-            'firstname' => $user->getFirstname(),
-            'lastname' => $user->getLastname(),
+            'id' => $createdUser->getId(),
+            'email' => $createdUser->getEmail(),
+            'firstname' => $createdUser->getFirstname(),
+            'lastname' => $createdUser->getLastname(),
         ], 201);
     }
 }
