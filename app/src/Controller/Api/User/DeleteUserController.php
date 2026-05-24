@@ -2,7 +2,9 @@
 
 namespace App\Controller\Api\User;
 
-use App\Repository\UserRepository;
+use App\Application\Command\User\DeleteUserCommand;
+use App\Application\Handler\User\DeleteUserHandler;
+use App\Entity\Client;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -13,23 +15,23 @@ final class DeleteUserController extends AbstractController
     #[Route('/api/users/{id}', name: 'api_user_delete', methods: ['DELETE'])]
     public function __invoke(
         int $id,
-        UserRepository $userRepository,
+        DeleteUserHandler $handler,
         Security $security
     ): Response {
-        /** @var \App\Entity\Client $client */
+        /** @var Client $client */
         $client = $security->getUser();
 
-        $user = $userRepository->findOneForClient($id, $client);
+        $deleted = $handler->handle(
+            new DeleteUserCommand($id, $client)
+        );
 
-        if (!$user) {
+        if (!$deleted) {
             return $this->json([
                 'status' => 404,
                 'message' => 'User not found',
                 'error_code' => 'NOT_FOUND'
             ], 404);
         }
-
-        $userRepository->remove($user, true);
 
         return new Response(null, 204);
     }

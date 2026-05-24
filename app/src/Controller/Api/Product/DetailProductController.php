@@ -2,7 +2,8 @@
 
 namespace App\Controller\Api\Product;
 
-use App\Entity\Product;
+use App\Application\Handler\Product\GetProductHandler;
+use App\Application\Query\Product\GetProductQuery;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -11,44 +12,36 @@ use Symfony\Component\Routing\Attribute\Route;
 final class DetailProductController extends AbstractController
 {
     #[Route('/api/products/{id}', name: 'api_product_detail', methods: ['GET'])]
-    public function detail(
-        Product $product,
+    public function __invoke(
+        int $id,
+        GetProductHandler $handler,
         Request $request
     ): JsonResponse {
-        $response = $this->json(
-            $product,
-            200,
-            [],
-            [
-                'groups' => 'product:detail'
-            ]
+        $data = $handler->handle(
+            new GetProductQuery($id)
         );
+
+        if (!$data) {
+            return $this->json([
+                'message' => 'Product not found'
+            ], 404);
+        }
+
+        $response = $this->json($data);
 
         /*
          * CACHE HTTP
          */
 
-        // public : catalogue partagé
         $response->setPublic();
-
-        // 60 sec
         $response->setMaxAge(60);
 
-        // ETag basé sur le produit
         $etag = md5(
-            $product->getId()
-                . $product->getName()
-                . $product->getPrice()
+            (string) $id . json_encode($data)
         );
 
         $response->setEtag($etag);
 
-        // Last Modified via Timestampable
-        if ($product->getUpdatedAt()) {
-            $response->setLastModified($product->getUpdatedAt());
-        }
-
-        // 304 automatique
         if ($response->isNotModified($request)) {
             return $response;
         }

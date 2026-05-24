@@ -2,8 +2,9 @@
 
 namespace App\Controller\Api\User;
 
+use App\Application\Handler\User\GetUserHandler;
+use App\Application\Query\User\GetUserQuery;
 use App\Entity\Client;
-use App\Repository\UserRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -13,55 +14,41 @@ use Symfony\Bundle\SecurityBundle\Security;
 final class DetailUserController extends AbstractController
 {
     #[Route('/api/users/{id}', name: 'api_user_detail', methods: ['GET'])]
-    public function detail(
+    public function __invoke(
         int $id,
-        UserRepository $userRepository,
+        GetUserHandler $handler,
         Security $security,
         Request $request
     ): JsonResponse {
         /** @var Client $client */
         $client = $security->getUser();
 
-        $user = $userRepository->findOneForClient($id, $client);
+        $data = $handler->handle(
+            new GetUserQuery($id, $client)
+        );
 
-        if (!$user) {
+        if (!$data) {
             return $this->json([
                 'error' => 'Utilisateur non trouvé'
             ], 404);
         }
 
-        $response = $this->json(
-            $user,
-            200,
-            [],
-            ['groups' => 'user:detail']
-        );
+        $response = $this->json($data);
 
         /*
          * CACHE HTTP
          */
 
-        // cache privé (lié au client)
         $response->setPrivate();
-
-        // 60 sec
         $response->setMaxAge(60);
 
-        // ETag : client + user
         $etag = md5(
             $client->getId()
-                . $user->getId()
-                . $user->getEmail()
+                . json_encode($data)
         );
 
         $response->setEtag($etag);
 
-        // Last Modified via Timestampable
-        if ($user->getUpdatedAt()) {
-            $response->setLastModified($user->getUpdatedAt());
-        }
-
-        // 304 automatique
         if ($response->isNotModified($request)) {
             return $response;
         }
