@@ -26,11 +26,17 @@ final class ListUsersController extends AbstractController
         $page = $request->query->getInt('page', 1);
         $limit = 5;
 
+        // 🔍 filtres SPECIFICATION
+        $email = $request->query->get('email');
+        $name = $request->query->get('name');
+
         $result = $handler->handle(
             new GetUsersQuery(
                 $client,
                 $page,
-                $limit
+                $limit,
+                email: $email,
+                name: $name
             )
         );
 

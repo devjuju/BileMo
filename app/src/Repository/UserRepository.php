@@ -2,6 +2,7 @@
 
 namespace App\Repository;
 
+use App\Application\Specification\SpecificationInterface;
 use App\Entity\Client;
 use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
@@ -53,5 +54,28 @@ class UserRepository extends ServiceEntityRepository
         if ($flush) {
             $this->entityManager->flush();
         }
+    }
+
+    public function match(SpecificationInterface $spec, string $alias, int $limit, int $offset): array
+    {
+        $qb = $this->createQueryBuilder($alias);
+
+        $spec->apply($qb, $alias);
+
+        return $qb
+            ->setMaxResults($limit)
+            ->setFirstResult($offset)
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function countMatch(SpecificationInterface $spec, string $alias): int
+    {
+        $qb = $this->createQueryBuilder($alias)
+            ->select("COUNT($alias.id)");
+
+        $spec->apply($qb, $alias);
+
+        return (int) $qb->getQuery()->getSingleScalarResult();
     }
 }
