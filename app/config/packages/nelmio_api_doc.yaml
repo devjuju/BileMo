@@ -1,0 +1,20 @@
+nelmio_api_doc:
+    documentation:
+        info:
+            title: BileMo API
+            description: API B2B de gestion des produits et utilisateurs BileMo
+            version: 1.0.0
+
+        components:
+            securitySchemes:
+                bearerAuth:
+                    type: http
+                    scheme: bearer
+                    bearerFormat: JWT
+
+        security:
+            - bearerAuth: []
+
+    areas:
+        path_patterns:
+            - ^/api(?!/doc$)
