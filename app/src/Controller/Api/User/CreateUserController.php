@@ -3,6 +3,7 @@
 namespace App\Controller\Api\User;
 
 use App\Application\Command\User\CreateUserCommand;
+use App\Application\DTO\User\CreateUserDTO;
 use App\Application\Handler\User\CreateUserHandler;
 use App\Entity\Client;
 use App\Entity\User;
@@ -30,6 +31,12 @@ final class CreateUserController extends AbstractController
             true
         );
 
+        $dto = new CreateUserDTO(
+            $data['email'] ?? '',
+            $data['firstname'] ?? '',
+            $data['lastname'] ?? ''
+        );
+
         if (!$data) {
             return $this->json([
                 'message' => 'Invalid JSON'
@@ -41,9 +48,9 @@ final class CreateUserController extends AbstractController
          */
 
         $user = new User();
-        $user->setEmail($data['email'] ?? '');
-        $user->setFirstname($data['firstname'] ?? '');
-        $user->setLastname($data['lastname'] ?? '');
+        $user->setEmail($dto->email);
+        $user->setFirstname($dto->firstname);
+        $user->setLastname($dto->lastname);
         $user->setClient($client);
 
         $violations = $validator->validate($user);
@@ -67,9 +74,9 @@ final class CreateUserController extends AbstractController
          */
 
         $command = new CreateUserCommand(
-            $data['email'],
-            $data['firstname'],
-            $data['lastname'],
+            $dto->email,
+            $dto->firstname,
+            $dto->lastname,
             $client
         );
 

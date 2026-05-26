@@ -2,25 +2,25 @@
 
 namespace App\Api\Representation;
 
-use App\Entity\Product;
+use App\Application\DTO\Product\ProductListDTO;
 
 class ProductListRepresentation
 {
     public function __construct(
-        private Product $product
+        private ProductListDTO $product
     ) {}
 
     public function toArray(): array
     {
         return [
-            'id' => $this->product->getId(),
-            'name' => $this->product->getName(),
-            'brand' => $this->product->getBrand(),
-            'price' => $this->product->getPrice(),
+            'id' => $this->product->id,
+            'name' => $this->product->name,
+            'brand' => $this->product->brand,
+            'price' => $this->product->price,
 
             '_links' => [
                 'self' => [
-                    'href' => '/api/products/' . $this->product->getId(),
+                    'href' => '/api/products/' . $this->product->id,
                     'method' => 'GET'
                 ],
                 'collection' => [

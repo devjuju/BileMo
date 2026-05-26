@@ -2,7 +2,7 @@
 
 namespace App\Application\Handler\User;
 
-use App\Api\Representation\UserListRepresentation;
+use App\Application\DTO\User\UserListDTO;
 use App\Application\Query\User\GetUsersQuery;
 use App\Repository\UserRepository;
 
@@ -27,7 +27,11 @@ class GetUsersHandler
 
         return [
             'data' => array_map(
-                fn($user) => (new UserListRepresentation($user))->toArray(),
+                fn($user) => new UserListDTO(
+                    $user->getId(),
+                    $user->getFirstname(),
+                    $user->getLastname()
+                ),
                 $users
             ),
             'total' => $total

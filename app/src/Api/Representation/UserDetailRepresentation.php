@@ -2,29 +2,29 @@
 
 namespace App\Api\Representation;
 
-use App\Entity\User;
+use App\Application\DTO\User\UserDetailDTO;
 
 class UserDetailRepresentation
 {
     public function __construct(
-        private User $user
+        private UserDetailDTO $user
     ) {}
 
     public function toArray(): array
     {
         return [
-            'id' => $this->user->getId(),
-            'email' => $this->user->getEmail(),
-            'firstname' => $this->user->getFirstname(),
-            'lastname' => $this->user->getLastname(),
+            'id' => $this->user->id,
+            'email' => $this->user->email,
+            'firstname' => $this->user->firstname,
+            'lastname' => $this->user->lastname,
 
             '_links' => [
                 'self' => [
-                    'href' => '/api/users/' . $this->user->getId(),
+                    'href' => '/api/users/' . $this->user->id,
                     'method' => 'GET'
                 ],
                 'delete' => [
-                    'href' => '/api/users/' . $this->user->getId(),
+                    'href' => '/api/users/' . $this->user->id,
                     'method' => 'DELETE'
                 ],
                 'collection' => [

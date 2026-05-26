@@ -2,6 +2,7 @@
 
 namespace App\Controller\Api\User;
 
+use App\Api\Representation\UserListRepresentation;
 use App\Application\Handler\User\GetUsersHandler;
 use App\Application\Query\User\GetUsersQuery;
 use App\Entity\Client;
@@ -33,6 +34,11 @@ final class ListUsersController extends AbstractController
             )
         );
 
+        $data = array_map(
+            fn($dto) => (new UserListRepresentation($dto))->toArray(),
+            $result['data']
+        );
+
         $response = $this->json([
             'page' => $page,
             'limit' => $limit,
@@ -40,7 +46,7 @@ final class ListUsersController extends AbstractController
             'total_pages' => ceil(
                 $result['total'] / $limit
             ),
-            'data' => $result['data']
+            'data' => $data
         ]);
 
         /*
