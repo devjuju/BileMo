@@ -2,28 +2,28 @@
 
 namespace App\Api\Representation;
 
-use App\Entity\User;
+use App\Application\DTO\User\UserListDTO;
 
 class UserListRepresentation
 {
     public function __construct(
-        private User $user
+        private UserListDTO $user
     ) {}
 
     public function toArray(): array
     {
         return [
-            'id' => $this->user->getId(),
-            'firstname' => $this->user->getFirstname(),
-            'lastname' => $this->user->getLastname(),
+            'id' => $this->user->id,
+            'firstname' => $this->user->firstname,
+            'lastname' => $this->user->lastname,
 
             '_links' => [
                 'self' => [
-                    'href' => '/api/users/' . $this->user->getId(),
+                    'href' => '/api/users/' . $this->user->id,
                     'method' => 'GET'
                 ],
                 'delete' => [
-                    'href' => '/api/users/' . $this->user->getId(),
+                    'href' => '/api/users/' . $this->user->id,
                     'method' => 'DELETE'
                 ],
                 'collection' => [

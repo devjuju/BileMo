@@ -2,9 +2,9 @@
 
 namespace App\Application\Handler\Product;
 
+use App\Application\DTO\Product\ProductDetailDTO;
 use App\Application\Query\Product\GetProductQuery;
 use App\Repository\ProductRepository;
-use App\Api\Representation\ProductDetailRepresentation;
 
 class GetProductHandler
 {
@@ -12,7 +12,7 @@ class GetProductHandler
         private ProductRepository $productRepository
     ) {}
 
-    public function handle(GetProductQuery $query): ?array
+    public function handle(GetProductQuery $query): ?ProductDetailDTO
     {
         $product = $this->productRepository->find($query->id);
 
@@ -20,6 +20,16 @@ class GetProductHandler
             return null;
         }
 
-        return (new ProductDetailRepresentation($product))->toArray();
+        return new ProductDetailDTO(
+            $product->getId(),
+            $product->getName(),
+            $product->getBrand(),
+            $product->getDescription(),
+            $product->getPrice(),
+            $product->getStock(),
+            $product->getColor(),
+            $product->getStorage(),
+            $product->getScreenSize()
+        );
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Controller\Api\User;
 
+use App\Api\Representation\UserDetailRepresentation;
 use App\Application\Handler\User\GetUserHandler;
 use App\Application\Query\User\GetUserQuery;
 use App\Entity\Client;
@@ -23,15 +24,17 @@ final class DetailUserController extends AbstractController
         /** @var Client $client */
         $client = $security->getUser();
 
-        $data = $handler->handle(
+        $dto = $handler->handle(
             new GetUserQuery($id, $client)
         );
 
-        if (!$data) {
+        if (!$dto) {
             return $this->json([
                 'error' => 'Utilisateur non trouvé'
             ], 404);
         }
+
+        $data = (new UserDetailRepresentation($dto))->toArray();
 
         $response = $this->json($data);
 

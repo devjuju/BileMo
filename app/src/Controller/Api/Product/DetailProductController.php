@@ -2,6 +2,7 @@
 
 namespace App\Controller\Api\Product;
 
+use App\Api\Representation\ProductDetailRepresentation;
 use App\Application\Handler\Product\GetProductHandler;
 use App\Application\Query\Product\GetProductQuery;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -17,15 +18,18 @@ final class DetailProductController extends AbstractController
         GetProductHandler $handler,
         Request $request
     ): JsonResponse {
-        $data = $handler->handle(
+        $dto = $handler->handle(
             new GetProductQuery($id)
         );
 
-        if (!$data) {
+        if (!$dto) {
             return $this->json([
-                'message' => 'Product not found'
+                'message' => 'Produit non trouvé'
             ], 404);
         }
+
+        $data = (new ProductDetailRepresentation($dto))->toArray();
+
 
         $response = $this->json($data);
 

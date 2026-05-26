@@ -2,8 +2,8 @@
 
 namespace App\Application\Handler\User;
 
+use App\Application\DTO\User\UserDetailDTO;
 use App\Application\Query\User\GetUserQuery;
-use App\Api\Representation\UserDetailRepresentation;
 use App\Repository\UserRepository;
 
 final class GetUserHandler
@@ -14,7 +14,7 @@ final class GetUserHandler
 
     public function handle(
         GetUserQuery $query
-    ): ?array {
+    ): ?UserDetailDTO {
         $user = $this->repository->findOneBy([
             'id' => $query->id,
             'client' => $query->client
@@ -24,8 +24,11 @@ final class GetUserHandler
             return null;
         }
 
-        return (
-            new UserDetailRepresentation($user)
-        )->toArray();
+        return new UserDetailDTO(
+            $user->getId(),
+            $user->getEmail(),
+            $user->getFirstname(),
+            $user->getLastname()
+        );
     }
 }

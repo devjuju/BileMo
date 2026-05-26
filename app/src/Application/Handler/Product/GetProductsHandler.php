@@ -2,7 +2,7 @@
 
 namespace App\Application\Handler\Product;
 
-use App\Api\Representation\ProductListRepresentation;
+use App\Application\DTO\Product\ProductListDTO;
 use App\Application\Query\Product\GetProductsQuery;
 use App\Repository\ProductRepository;
 
@@ -22,7 +22,12 @@ class GetProductsHandler
         );
 
         return array_map(
-            fn($product) => (new ProductListRepresentation($product))->toArray(),
+            fn($product) => new ProductListDTO(
+                $product->getId(),
+                $product->getName(),
+                $product->getBrand(),
+                $product->getPrice(),
+            ),
             $products
         );
     }

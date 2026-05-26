@@ -2,6 +2,7 @@
 
 namespace App\Controller\Api\Product;
 
+use App\Api\Representation\ProductListRepresentation;
 use App\Application\Handler\Product\GetProductsHandler;
 use App\Application\Query\Product\GetProductsQuery;
 use App\Repository\ProductRepository;
@@ -25,6 +26,11 @@ final class ListProductController extends AbstractController
             new GetProductsQuery($page, $limit)
         );
 
+        $formatted = array_map(
+            fn($dto) => (new ProductListRepresentation($dto))->toArray(),
+            $data
+        );
+
         $total = $productRepository->count([]);
 
         $response = $this->json([
@@ -32,7 +38,7 @@ final class ListProductController extends AbstractController
             'limit' => $limit,
             'total_items' => $total,
             'total_pages' => ceil($total / $limit),
-            'data' => $data
+            'data' => $formatted
         ]);
 
         /*
