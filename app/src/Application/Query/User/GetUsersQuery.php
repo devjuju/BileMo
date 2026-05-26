@@ -9,6 +9,9 @@ final class GetUsersQuery
     public function __construct(
         public readonly Client $client,
         public readonly int $page,
-        public readonly int $limit
+        public readonly int $limit,
+        public readonly ?string $email = null,
+        public readonly ?string $name = null,
+
     ) {}
 }
