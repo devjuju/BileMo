@@ -7,6 +7,7 @@ use App\Application\DTO\User\CreateUserDTO;
 use App\Application\Handler\User\CreateUserHandler;
 use App\Entity\Client;
 use App\Entity\User;
+use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -16,6 +17,50 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 final class CreateUserController extends AbstractController
 {
+    #[OA\Post(
+        path: '/api/users',
+        summary: 'Créer un utilisateur',
+        description: 'Crée un nouvel utilisateur lié au client authentifié.',
+        tags: ['Users'],
+        security: [['bearerAuth' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['email', 'firstname', 'lastname'],
+                properties: [
+                    new OA\Property(
+                        property: 'email',
+                        type: 'string',
+                        example: 'john.doe@test.com'
+                    ),
+                    new OA\Property(
+                        property: 'firstname',
+                        type: 'string',
+                        example: 'John'
+                    ),
+                    new OA\Property(
+                        property: 'lastname',
+                        type: 'string',
+                        example: 'Doe'
+                    )
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 201,
+                description: 'Utilisateur créé avec succès'
+            ),
+            new OA\Response(
+                response: 400,
+                description: 'Erreur de validation ou JSON invalide'
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'Non authentifié'
+            )
+        ]
+    )]
     #[Route('/api/users', name: 'api_users_create', methods: ['POST'])]
     public function __invoke(
         Request $request,
@@ -31,17 +76,17 @@ final class CreateUserController extends AbstractController
             true
         );
 
-        $dto = new CreateUserDTO(
-            $data['email'] ?? '',
-            $data['firstname'] ?? '',
-            $data['lastname'] ?? ''
-        );
-
         if (!$data) {
             return $this->json([
                 'message' => 'Invalid JSON'
             ], 400);
         }
+
+        $dto = new CreateUserDTO(
+            $data['email'] ?? '',
+            $data['firstname'] ?? '',
+            $data['lastname'] ?? ''
+        );
 
         /*
          * Validation
@@ -80,9 +125,7 @@ final class CreateUserController extends AbstractController
             $client
         );
 
-        $createdUser = $handler->handle(
-            $command
-        );
+        $createdUser = $handler->handle($command);
 
         return $this->json([
             'id' => $createdUser->getId(),

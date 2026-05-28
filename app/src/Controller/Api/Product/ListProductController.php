@@ -5,6 +5,7 @@ namespace App\Controller\Api\Product;
 use App\Api\Representation\ProductListRepresentation;
 use App\Application\Handler\Product\GetProductsHandler;
 use App\Application\Query\Product\GetProductsQuery;
+use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -12,13 +13,62 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class ListProductController extends AbstractController
 {
+    #[OA\Get(
+        path: '/api/products',
+        summary: 'Liste des produits',
+        description: 'Retourne la liste paginée des produits BileMo avec filtres optionnels.',
+        tags: ['Products'],
+        parameters: [
+            new OA\Parameter(
+                name: 'page',
+                description: 'Numéro de page',
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(type: 'integer', default: 1)
+            ),
+            new OA\Parameter(
+                name: 'brand',
+                description: 'Filtrer par marque',
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(type: 'string')
+            ),
+            new OA\Parameter(
+                name: 'minPrice',
+                description: 'Prix minimum',
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(type: 'number', format: 'float')
+            ),
+            new OA\Parameter(
+                name: 'maxPrice',
+                description: 'Prix maximum',
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(type: 'number', format: 'float')
+            ),
+            new OA\Parameter(
+                name: 'limit',
+                description: 'Nombre d’éléments par page',
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(type: 'integer', default: 5)
+            ),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Liste des produits récupérée avec succès'
+            )
+        ]
+    )]
     #[Route('/api/products', name: 'api_products_list', methods: ['GET'])]
     public function __invoke(
         Request $request,
         GetProductsHandler $handler
     ): JsonResponse {
         $page = $request->query->getInt('page', 1);
-        $limit = 5;
+        $limit = $request->query->getInt('limit', 5);
 
         $brand = $request->query->get('brand');
 

@@ -6,6 +6,7 @@ use App\Api\Representation\UserListRepresentation;
 use App\Application\Handler\User\GetUsersHandler;
 use App\Application\Query\User\GetUsersQuery;
 use App\Entity\Client;
+use OpenApi\Attributes as OA;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -14,6 +15,53 @@ use Symfony\Bundle\SecurityBundle\Security;
 
 final class ListUsersController extends AbstractController
 {
+    #[OA\Get(
+        path: '/api/users',
+        summary: 'Liste des utilisateurs',
+        description: 'Retourne la liste paginée des utilisateurs liés au client authentifié.',
+        tags: ['Users'],
+        security: [['bearerAuth' => []]],
+        parameters: [
+            new OA\Parameter(
+                name: 'page',
+                description: 'Numéro de page',
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(type: 'integer', default: 1)
+            ),
+            new OA\Parameter(
+                name: 'limit',
+                description: 'Nombre d’éléments par page',
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(type: 'integer', default: 5)
+            ),
+            new OA\Parameter(
+                name: 'email',
+                description: 'Filtrer par email',
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(type: 'string')
+            ),
+            new OA\Parameter(
+                name: 'name',
+                description: 'Filtrer par prénom ou nom',
+                in: 'query',
+                required: false,
+                schema: new OA\Schema(type: 'string')
+            )
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Liste des utilisateurs récupérée avec succès'
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'Non authentifié'
+            )
+        ]
+    )]
     #[Route('/api/users', name: 'api_users_list', methods: ['GET'])]
     public function __invoke(
         GetUsersHandler $handler,
@@ -58,7 +106,6 @@ final class ListUsersController extends AbstractController
         /*
          * CACHE HTTP
          */
-
         $response->setPrivate();
         $response->setMaxAge(30);
 
