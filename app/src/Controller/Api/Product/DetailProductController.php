@@ -11,6 +11,13 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
 
+/**
+ * Controller API permettant de récupérer
+ * le détail d’un produit BileMo.
+ *
+ * Il orchestre la couche Application (CQRS)
+ * et la représentation HATEOAS.
+ */
 final class DetailProductController extends AbstractController
 {
     #[OA\Get(
@@ -44,29 +51,51 @@ final class DetailProductController extends AbstractController
         GetProductHandler $handler,
         Request $request
     ): JsonResponse {
+
+        /**
+         * Création de la Query CQRS
+         * envoyée au handler.
+         */
         $dto = $handler->handle(
             new GetProductQuery($id)
         );
 
+        // Cas d’erreur : produit inexistant
         if (!$dto) {
             return $this->json([
                 'message' => 'Produit non trouvé'
             ], 404);
         }
 
+        /**
+         * Transformation du DTO en représentation API
+         * (HATEOAS / format JSON final)
+         */
         $data = (new ProductDetailRepresentation($dto))->toArray();
 
+        /**
+         * Création de la réponse JSON
+         */
         $response = $this->json($data);
 
+        /**
+         * Cache HTTP (optimisation performance API)
+         */
         $response->setPublic();
         $response->setMaxAge(60);
 
+        /**
+         * ETag pour validation de cache côté client
+         */
         $etag = md5(
             (string) $id . json_encode($data)
         );
 
         $response->setEtag($etag);
 
+        /**
+         * Retour 304 Not Modified si cache valide
+         */
         if ($response->isNotModified($request)) {
             return $response;
         }

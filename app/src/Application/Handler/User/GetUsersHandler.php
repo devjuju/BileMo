@@ -10,42 +10,73 @@ use App\Application\Specification\User\UserByEmailSpec;
 use App\Application\Specification\User\UserByNameSpec;
 use App\Repository\UserRepository;
 
+/**
+ * Handler CQRS chargé de récupérer
+ * la liste des utilisateurs d'un client.
+ *
+ * Il gère les filtres dynamiques, la sécurité
+ * et la pagination.
+ */
 class GetUsersHandler
 {
+    /**
+     * Injection du repository User.
+     */
     public function __construct(
         private UserRepository $repository
     ) {}
 
+    /**
+     * Traitement de la requête GetUsersQuery.
+     *
+     * @return array{
+     *   data: UserListDTO[],
+     *   total: int
+     * }
+     */
     public function handle(GetUsersQuery $query): array
     {
-
+        // Construction du QueryBuilder Doctrine
         $qb = $this->repository->createQueryBuilder('u');
 
+        /**
+         * Liste des specifications appliquées
+         * dynamiquement selon les filtres.
+         */
         $specs = [];
 
-        // 🔒 sécurité obligatoire
+        // 🔒 Sécurité obligatoire : isolation par client
         $specs[] = new UserByClientSpec($query->client);
 
-        // 🔍 filtres dynamiques
+        // 🔍 Filtre par email
         if ($query->email) {
             $specs[] = new UserByEmailSpec($query->email);
         }
+
+        // 🔍 Filtre par nom/prénom
         if ($query->name) {
             $specs[] = new UserByNameSpec($query->name);
         }
 
-        // 🔗 combinaison
+        /**
+         * Combinaison des specifications
+         * avec un AND logique.
+         */
         $spec = AbstractSpecification::and(...$specs);
         $spec->apply($qb, 'u');
 
-        // 📄 pagination
+        /**
+         * Pagination des résultats
+         */
         $users = $qb
             ->setMaxResults($query->limit)
             ->setFirstResult(($query->page - 1) * $query->limit)
             ->getQuery()
             ->getResult();
 
-        // 🔢 total (important pour API)
+        /**
+         * Total des résultats (sans pagination)
+         */
         $countQb = clone $qb;
 
         $total = $countQb
@@ -53,6 +84,9 @@ class GetUsersHandler
             ->getQuery()
             ->getSingleScalarResult();
 
+        /**
+         * Transformation en DTO
+         */
         return [
             'data' => array_map(
                 fn($user) => new UserListDTO(
@@ -63,7 +97,7 @@ class GetUsersHandler
                 ),
                 $users
             ),
-            'total' => $total
+            'total' => (int) $total
         ];
     }
 }
