@@ -11,6 +11,12 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Bundle\SecurityBundle\Security;
 
+/**
+ * Controller API permettant la suppression
+ * d’un utilisateur lié à un client authentifié.
+ *
+ * Respecte le modèle CQRS (Command) et la sécurité B2B.
+ */
 final class DeleteUserController extends AbstractController
 {
     #[OA\Delete(
@@ -49,13 +55,23 @@ final class DeleteUserController extends AbstractController
         DeleteUserHandler $handler,
         Security $security
     ): Response {
+
+        /**
+         * Récupération du client authentifié (JWT)
+         */
         /** @var Client $client */
         $client = $security->getUser();
 
+        /**
+         * Command CQRS de suppression
+         */
         $deleted = $handler->handle(
             new DeleteUserCommand($id, $client)
         );
 
+        /**
+         * Cas utilisateur introuvable
+         */
         if (!$deleted) {
             return $this->json([
                 'status' => 404,
@@ -64,6 +80,9 @@ final class DeleteUserController extends AbstractController
             ], 404);
         }
 
+        /**
+         * Réponse REST standard : suppression réussie
+         */
         return new Response(null, 204);
     }
 }

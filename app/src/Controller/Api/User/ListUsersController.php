@@ -13,6 +13,13 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Bundle\SecurityBundle\Security;
 
+/**
+ * Controller API permettant de récupérer
+ * la liste paginée des utilisateurs liés à un client authentifié.
+ *
+ * Implémente CQRS (Query side), Specification Pattern,
+ * et cache HTTP pour optimisation.
+ */
 final class ListUsersController extends AbstractController
 {
     #[OA\Get(
@@ -68,16 +75,28 @@ final class ListUsersController extends AbstractController
         Security $security,
         Request $request
     ): JsonResponse {
+
+        /**
+         * Récupération du client authentifié (JWT)
+         */
         /** @var Client $client */
         $client = $security->getUser();
 
+        /**
+         * Paramètres de pagination
+         */
         $page = $request->query->getInt('page', 1);
         $limit = 5;
 
-        // 🔍 filtres SPECIFICATION
+        /**
+         * Filtres (Specification Pattern)
+         */
         $email = $request->query->get('email');
         $name = $request->query->get('name');
 
+        /**
+         * Appel CQRS Query → Handler
+         */
         $result = $handler->handle(
             new GetUsersQuery(
                 $client,
@@ -88,11 +107,17 @@ final class ListUsersController extends AbstractController
             )
         );
 
+        /**
+         * Transformation DTO → Representation (HATEOAS)
+         */
         $data = array_map(
             fn($dto) => (new UserListRepresentation($dto))->toArray(),
             $result['data']
         );
 
+        /**
+         * Réponse JSON paginée
+         */
         $response = $this->json([
             'page' => $page,
             'limit' => $limit,
@@ -104,11 +129,17 @@ final class ListUsersController extends AbstractController
         ]);
 
         /*
-         * CACHE HTTP
+         * =========================
+         * CACHE HTTP (optimisation API)
+         * =========================
          */
+
         $response->setPrivate();
         $response->setMaxAge(30);
 
+        /**
+         * ETag basé sur client + page + données
+         */
         $etag = md5(
             $client->getId()
                 . $page
@@ -117,6 +148,9 @@ final class ListUsersController extends AbstractController
 
         $response->setEtag($etag);
 
+        /**
+         * Retour 304 si cache valide
+         */
         if ($response->isNotModified($request)) {
             return $response;
         }

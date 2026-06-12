@@ -13,6 +13,12 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Bundle\SecurityBundle\Security;
 
+/**
+ * Controller API permettant de récupérer
+ * le détail d’un utilisateur lié à un client authentifié.
+ *
+ * Implémente CQRS (Query side), HATEOAS et cache HTTP.
+ */
 final class DetailUserController extends AbstractController
 {
     #[OA\Get(
@@ -52,29 +58,51 @@ final class DetailUserController extends AbstractController
         Security $security,
         Request $request
     ): JsonResponse {
+
+        /**
+         * Récupération du client authentifié (JWT)
+         */
         /** @var Client $client */
         $client = $security->getUser();
 
+        /**
+         * Query CQRS (lecture utilisateur)
+         */
         $dto = $handler->handle(
             new GetUserQuery($id, $client)
         );
 
+        /**
+         * Cas utilisateur introuvable
+         */
         if (!$dto) {
             return $this->json([
                 'error' => 'Utilisateur non trouvé'
             ], 404);
         }
 
+        /**
+         * Transformation DTO → Representation (HATEOAS)
+         */
         $data = (new UserDetailRepresentation($dto))->toArray();
 
+        /**
+         * Création de la réponse JSON
+         */
         $response = $this->json($data);
 
         /*
-         * CACHE HTTP
+         * =========================
+         * CACHE HTTP (optimisation API)
+         * =========================
          */
+
         $response->setPrivate();
         $response->setMaxAge(60);
 
+        /**
+         * ETag basé sur le client + données
+         */
         $etag = md5(
             $client->getId()
                 . json_encode($data)
@@ -82,6 +110,9 @@ final class DetailUserController extends AbstractController
 
         $response->setEtag($etag);
 
+        /**
+         * Retour 304 Not Modified si cache valide
+         */
         if ($response->isNotModified($request)) {
             return $response;
         }

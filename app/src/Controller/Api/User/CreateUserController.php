@@ -15,6 +15,13 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
+/**
+ * Controller API permettant de créer
+ * un utilisateur lié à un client authentifié.
+ *
+ * Il applique validation, CQRS Command,
+ * et sécurisation B2B.
+ */
 final class CreateUserController extends AbstractController
 {
     #[OA\Post(
@@ -68,20 +75,31 @@ final class CreateUserController extends AbstractController
         ValidatorInterface $validator,
         CreateUserHandler $handler
     ): JsonResponse {
+
+        /**
+         * Récupération du client authentifié (JWT)
+         */
         /** @var Client $client */
         $client = $security->getUser();
 
+        /**
+         * Décodage du JSON reçu
+         */
         $data = json_decode(
             $request->getContent(),
             true
         );
 
+        // Vérification JSON valide
         if (!$data) {
             return $this->json([
                 'message' => 'Invalid JSON'
             ], 400);
         }
 
+        /**
+         * Mapping vers DTO
+         */
         $dto = new CreateUserDTO(
             $data['email'] ?? '',
             $data['firstname'] ?? '',
@@ -89,7 +107,9 @@ final class CreateUserController extends AbstractController
         );
 
         /*
-         * Validation
+         * =========================
+         * VALIDATION MÉTIER
+         * =========================
          */
 
         $user = new User();
@@ -115,7 +135,9 @@ final class CreateUserController extends AbstractController
         }
 
         /*
-         * CQRS Command
+         * =========================
+         * CQRS COMMAND
+         * =========================
          */
 
         $command = new CreateUserCommand(
@@ -127,6 +149,9 @@ final class CreateUserController extends AbstractController
 
         $createdUser = $handler->handle($command);
 
+        /**
+         * Réponse API finale
+         */
         return $this->json([
             'id' => $createdUser->getId(),
             'email' => $createdUser->getEmail(),

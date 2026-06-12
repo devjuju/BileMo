@@ -11,6 +11,13 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
 
+/**
+ * Controller API permettant de récupérer
+ * la liste paginée des produits BileMo.
+ *
+ * Il gère les filtres, la pagination,
+ * et délègue la logique métier au handler CQRS.
+ */
 final class ListProductController extends AbstractController
 {
     #[OA\Get(
@@ -67,6 +74,10 @@ final class ListProductController extends AbstractController
         Request $request,
         GetProductsHandler $handler
     ): JsonResponse {
+
+        /**
+         * Récupération et normalisation des paramètres HTTP
+         */
         $page = $request->query->getInt('page', 1);
         $limit = $request->query->getInt('limit', 5);
 
@@ -75,9 +86,13 @@ final class ListProductController extends AbstractController
         $minPrice = $request->query->get('minPrice');
         $maxPrice = $request->query->get('maxPrice');
 
+        // Conversion des valeurs en float si présentes
         $minPrice = $minPrice !== null ? (float) $minPrice : null;
         $maxPrice = $maxPrice !== null ? (float) $maxPrice : null;
 
+        /**
+         * Construction de la Query CQRS
+         */
         $result = $handler->handle(
             new GetProductsQuery(
                 $page,
@@ -88,11 +103,17 @@ final class ListProductController extends AbstractController
             )
         );
 
+        /**
+         * Transformation DTO → Representation (HATEOAS)
+         */
         $data = array_map(
             fn($dto) => (new ProductListRepresentation($dto))->toArray(),
             $result['data']
         );
 
+        /**
+         * Construction de la réponse API finale
+         */
         $response = $this->json([
             'page' => $page,
             'limit' => $limit,
@@ -101,12 +122,15 @@ final class ListProductController extends AbstractController
             'data' => $data
         ]);
 
-        /*
-         * CACHE HTTP
+        /**
+         * CACHE HTTP (optimisation performance API)
          */
         $response->setPublic();
         $response->setMaxAge(60);
 
+        /**
+         * ETag basé sur les filtres de recherche
+         */
         $etag = md5(
             $page
                 . $brand
@@ -116,6 +140,9 @@ final class ListProductController extends AbstractController
 
         $response->setEtag($etag);
 
+        /**
+         * Retour 304 si la ressource n’a pas changé
+         */
         if ($response->isNotModified($request)) {
             return $response;
         }
