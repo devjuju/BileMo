@@ -61,7 +61,7 @@ Projet réalisé dans le cadre de la formation OpenClassrooms.
 | Doctrine ORM       | Accès aux données          |
 | JWT                | Authentification API       |
 | NelmioApiDocBundle | Documentation Swagger      |
-| PHPStan / Codacy   | Qualité du code            |
+| Codacy             | Qualité du code            |
 
 ---
 
@@ -86,13 +86,13 @@ docker-compose exec php php bin/console doctrine:fixtures:load
 👉 API disponible sur :
 
 ```txt
-http://localhost:8080
+http://localhost:8496
 ```
 
 👉 Documentation Swagger :
 
 ```txt
-http://localhost:8080/api/doc
+http://localhost:8496/api/doc
 ```
 
 ---
@@ -281,7 +281,7 @@ Contenu :
 
 Formats disponibles :
 
-- `.jpg` (version graphique)
+- `.png` (version graphique)
 
 ---
 
@@ -355,7 +355,6 @@ Le projet respecte :
 
 Outils utilisés :
 
-- PHPStan
 - Codacy
 - Symfony Validator
 
