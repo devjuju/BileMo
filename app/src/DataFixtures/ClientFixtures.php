@@ -24,7 +24,7 @@ class ClientFixtures extends Fixture
         $orange->setPassword(
             $this->passwordHasher->hashPassword(
                 $orange,
-                'password123'
+                'password'
             )
         );
 
@@ -37,7 +37,7 @@ class ClientFixtures extends Fixture
         $sfr->setPassword(
             $this->passwordHasher->hashPassword(
                 $sfr,
-                'password123'
+                'password'
             )
         );
 

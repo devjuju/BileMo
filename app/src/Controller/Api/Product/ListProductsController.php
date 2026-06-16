@@ -18,7 +18,7 @@ use Symfony\Component\Routing\Attribute\Route;
  * Il gère les filtres, la pagination,
  * et délègue la logique métier au handler CQRS.
  */
-final class ListProductController extends AbstractController
+final class ListProductsController extends AbstractController
 {
     #[OA\Get(
         path: '/api/products',

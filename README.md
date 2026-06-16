@@ -1,5 +1,7 @@
 # 📱 BileMo API (Symfony + Docker)
 
+[![Codacy Badge]](https://app.codacy.com/gh/devjuju/BileMo/dashboard)
+
 API REST B2B permettant aux plateformes partenaires d’accéder au catalogue de téléphones mobiles BileMo.
 
 ## 📌 Contexte
@@ -31,6 +33,7 @@ Projet réalisé dans le cadre de la formation OpenClassrooms.
 - 🔍 Détail d’un utilisateur
 - ➕ Création utilisateur
 - ❌ Suppression utilisateur
+- 🧪 Filtres dynamiques (client, nom, email)
 
 ## 🔐 Sécurité
 
@@ -70,7 +73,7 @@ Projet réalisé dans le cadre de la formation OpenClassrooms.
 ```bash
 git clone https://github.com/devjuju/BileMo.git
 
-cd bilemo-api
+cd BileMo
 
 docker-compose up -d --build
 
@@ -105,7 +108,7 @@ http://localhost:8496/api/doc
 ## 1. Cloner le projet
 
 ```bash
-git clone https://github.com/USERNAME/bilemo-api.git
+git clone https://github.com/devjuju/BileMo.git
 ```
 
 ## 2. Lancer Docker
@@ -125,7 +128,7 @@ docker-compose exec php composer install
 Créer un fichier `.env.local` :
 
 ```env
-DATABASE_URL="mysql://bilemo_user:bilemo_pass@database:3306/bilemo_db"
+DATABASE_URL="mysql://bilemo_the_user_db:bilemo_the_password@database:3306/bilemo_the_db?serverVersion=8.0.32&charset=utf8mb4"
 ```
 
 ## 5. Générer les clés JWT
@@ -191,6 +194,15 @@ Authorization: Bearer JWT_TOKEN
 
 ---
 
+# 👤 Comptes de démonstration
+
+| Client | Email                                       | Mot de passe |
+| ------ | ------------------------------------------- | ------------ |
+| Orange | [orange@bilemo.fr](mailto:orange@bilemo.fr) | password     |
+| SFR    | [sfr@bilemo.fr](mailto:sfr@bilemo.fr)       | password     |
+
+---
+
 # 📚 Documentation API
 
 La documentation Swagger est disponible via :
@@ -212,17 +224,21 @@ Elle permet de :
 
 ```text
 .
+BileMo/
 ├── apache/
-├── docker/
+├── mysql/
 ├── php/
-├── src/
-│   ├── Api/
-│   ├── Application/
-│   ├── Domain/
-│   ├── Infrastructure/
-│   └── Entity/
-├── uml/
-├── docker-compose.yml
+├── app/
+│   ├── src/
+│   │   ├── Api/
+│   │   ├── Application/
+│   │   ├── Controller/
+│   │   ├── Entity/
+│   │   ├── Repository/
+│   │   └── EventSubscriber/
+│   └── uml/
+├── docker-compose.yaml
+└── README.md
 ```
 
 ---
@@ -260,6 +276,24 @@ Les réponses API contiennent :
 - endpoints associés
 - documentation API
 
+## Modèle de Richardson
+
+L'API respecte les niveaux 1, 2 et 3 du modèle de Richardson :
+
+- Niveau 1 : ressources URI
+- Niveau 2 : verbes HTTP et codes de statut
+- Niveau 3 : HATEOAS
+
+## Cache HTTP
+
+Les endpoints de consultation utilisent :
+
+- Cache-Control
+- ETag
+- réponses 304 Not Modified
+
+afin d'optimiser les performances de l'API.
+
 ---
 
 # 📊 Diagrammes UML
@@ -267,17 +301,21 @@ Les réponses API contiennent :
 Les diagrammes UML sont disponibles dans le dossier :
 
 ```txt
-/uml
+/app/uml
 ```
 
-Contenu :
+Le projet contient notamment :
 
-- diagrammes de classes
-- diagrammes de séquence
-- diagrammes CQRS
-- diagrammes DTO
-- diagrammes HATEOAS
-- diagrammes du modèle de données
+- Use Case Diagram
+- Data Model
+- Global Architecture
+- DTO Diagram
+- HATEOAS Diagram
+- Specification Pattern Diagram
+- Products CQRS Diagram
+- Users CQRS Diagram
+- Sequence Diagrams
+- JWT Authentication Diagram
 
 Formats disponibles :
 
@@ -309,6 +347,8 @@ docker-compose down
 
 ```bash
 docker-compose down -v
+
+docker-compose up -d --build
 ```
 
 ---
@@ -346,6 +386,8 @@ Toutes les collections sont paginées afin de :
 
 # 📈 Qualité du code
 
+Le projet a obtenu un **Grade A sur Codacy**, garantissant un haut niveau de qualité et de bonnes pratiques.
+
 Le projet respecte :
 
 - les standards Symfony
@@ -357,6 +399,8 @@ Outils utilisés :
 
 - Codacy
 - Symfony Validator
+
+👉 Rapport complet : https://app.codacy.com/gh/devjuju/BileMo/dashboard
 
 ---
 
