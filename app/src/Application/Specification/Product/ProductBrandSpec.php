@@ -28,7 +28,6 @@ class ProductBrandSpec extends AbstractSpecification
     public function apply(QueryBuilder $qb, string $alias): void
     {
         $qb
-            // Filtre sur la marque
             ->andWhere("$alias.brand = :brand")
             ->setParameter('brand', $this->brand);
     }

@@ -11,13 +11,6 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
 
-/**
- * Controller API permettant de récupérer
- * la liste paginée des produits BileMo.
- *
- * Il gère les filtres, la pagination,
- * et délègue la logique métier au handler CQRS.
- */
 final class ListProductsController extends AbstractController
 {
     #[OA\Get(
@@ -76,22 +69,24 @@ final class ListProductsController extends AbstractController
     ): JsonResponse {
 
         /**
-         * Récupération et normalisation des paramètres HTTP
+         * Pagination sécurisée
          */
-        $page = $request->query->getInt('page', 1);
-        $limit = $request->query->getInt('limit', 5);
-
-        $brand = $request->query->get('brand');
-
-        $minPrice = $request->query->get('minPrice');
-        $maxPrice = $request->query->get('maxPrice');
-
-        // Conversion des valeurs en float si présentes
-        $minPrice = $minPrice !== null ? (float) $minPrice : null;
-        $maxPrice = $maxPrice !== null ? (float) $maxPrice : null;
+        $page = max(1, $request->query->getInt('page', 1));
+        $limit = max(1, $request->query->getInt('limit', 5));
 
         /**
-         * Construction de la Query CQRS
+         * Filtres
+         */
+        $brand = $request->query->get('brand');
+
+        $minPriceRaw = $request->query->get('minPrice');
+        $maxPriceRaw = $request->query->get('maxPrice');
+
+        $minPrice = is_numeric($minPriceRaw) ? (float) $minPriceRaw : null;
+        $maxPrice = is_numeric($maxPriceRaw) ? (float) $maxPriceRaw : null;
+
+        /**
+         * CQRS Query
          */
         $result = $handler->handle(
             new GetProductsQuery(
@@ -104,7 +99,7 @@ final class ListProductsController extends AbstractController
         );
 
         /**
-         * Transformation DTO → Representation (HATEOAS)
+         * DTO → HATEOAS representation
          */
         $data = array_map(
             fn($dto) => (new ProductListRepresentation($dto))->toArray(),
@@ -112,36 +107,44 @@ final class ListProductsController extends AbstractController
         );
 
         /**
-         * Construction de la réponse API finale
+         * Sécurisation pagination
+         */
+        $totalItems = (int) $result['total'];
+        $totalPages = $limit > 0 ? (int) ceil($totalItems / $limit) : 0;
+
+        /**
+         * Réponse JSON
          */
         $response = $this->json([
             'page' => $page,
             'limit' => $limit,
-            'total_items' => $result['total'],
-            'total_pages' => ceil($result['total'] / $limit),
+            'total_items' => $totalItems,
+            'total_pages' => $totalPages,
             'data' => $data
         ]);
 
         /**
-         * CACHE HTTP (optimisation performance API)
+         * Cache HTTP
          */
         $response->setPublic();
         $response->setMaxAge(60);
 
         /**
-         * ETag basé sur les filtres de recherche
+         * ETag robuste (stable et unique)
          */
-        $etag = md5(
-            $page
-                . $brand
-                . $minPrice
-                . $maxPrice
-        );
+        $etag = md5(json_encode([
+            $page,
+            $limit,
+            $brand,
+            $minPrice,
+            $maxPrice,
+            $totalItems
+        ]));
 
         $response->setEtag($etag);
 
         /**
-         * Retour 304 si la ressource n’a pas changé
+         * 304 Not Modified
          */
         if ($response->isNotModified($request)) {
             return $response;

@@ -28,7 +28,7 @@ final class LoginController extends AbstractController
                     new OA\Property(
                         property: 'email',
                         type: 'string',
-                        example: 'client@test.com'
+                        example: 'orange@bilemo.fr'
                     ),
                     new OA\Property(
                         property: 'password',

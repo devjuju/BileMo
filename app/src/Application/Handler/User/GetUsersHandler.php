@@ -10,63 +10,58 @@ use App\Application\Specification\User\UserByEmailSpec;
 use App\Application\Specification\User\UserByNameSpec;
 use App\Repository\UserRepository;
 
-/**
- * Handler CQRS chargé de récupérer
- * la liste des utilisateurs d'un client.
- *
- * Il gère les filtres dynamiques, la sécurité
- * et la pagination.
- */
 class GetUsersHandler
 {
-    /**
-     * Injection du repository User.
-     */
     public function __construct(
         private UserRepository $repository
     ) {}
 
-    /**
-     * Traitement de la requête GetUsersQuery.
-     *
-     * @return array{
-     *   data: UserListDTO[],
-     *   total: int
-     * }
-     */
     public function handle(GetUsersQuery $query): array
     {
-        // Construction du QueryBuilder Doctrine
+        /**
+         * =========================
+         * QUERY DATA
+         * =========================
+         */
         $qb = $this->repository->createQueryBuilder('u');
 
         /**
-         * Liste des specifications appliquées
-         * dynamiquement selon les filtres.
+         * =========================
+         * QUERY COUNT (séparée)
+         * =========================
+         */
+        $countQb = $this->repository->createQueryBuilder('u');
+
+        /**
+         * Specs
          */
         $specs = [];
 
-        // 🔒 Sécurité obligatoire : isolation par client
+        // sécurité client obligatoire
         $specs[] = new UserByClientSpec($query->client);
 
-        // 🔍 Filtre par email
         if ($query->email) {
             $specs[] = new UserByEmailSpec($query->email);
         }
 
-        // 🔍 Filtre par nom/prénom
         if ($query->name) {
             $specs[] = new UserByNameSpec($query->name);
         }
 
         /**
-         * Combinaison des specifications
-         * avec un AND logique.
+         * Application des specs sur les 2 query builders
          */
-        $spec = AbstractSpecification::and(...$specs);
-        $spec->apply($qb, 'u');
+        if (!empty($specs)) {
+            $spec = AbstractSpecification::and(...$specs);
+
+            $spec->apply($qb, 'u');
+            $spec->apply($countQb, 'u');
+        }
 
         /**
-         * Pagination des résultats
+         * =========================
+         * DATA PAGINATION
+         * =========================
          */
         $users = $qb
             ->setMaxResults($query->limit)
@@ -75,17 +70,19 @@ class GetUsersHandler
             ->getResult();
 
         /**
-         * Total des résultats (sans pagination)
+         * =========================
+         * COUNT SAFE
+         * =========================
          */
-        $countQb = clone $qb;
-
-        $total = $countQb
-            ->select('COUNT(u)')
+        $total = (int) $countQb
+            ->select('COUNT(DISTINCT u.id)')
             ->getQuery()
             ->getSingleScalarResult();
 
         /**
-         * Transformation en DTO
+         * =========================
+         * DTO
+         * =========================
          */
         return [
             'data' => array_map(
@@ -97,7 +94,7 @@ class GetUsersHandler
                 ),
                 $users
             ),
-            'total' => (int) $total
+            'total' => $total
         ];
     }
 }

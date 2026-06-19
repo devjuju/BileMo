@@ -9,64 +9,57 @@ use App\Application\Specification\Product\ProductBrandSpec;
 use App\Application\Specification\Product\ProductPriceRangeSpec;
 use App\Repository\ProductRepository;
 
-/**
- * Handler CQRS chargé de récupérer
- * la liste des produits avec filtres
- * et pagination.
- *
- * Il applique les specifications pour
- * construire dynamiquement la requête.
- */
 class GetProductsHandler
 {
-    /**
-     * Injection du repository Product.
-     */
     public function __construct(
         private ProductRepository $productRepository
     ) {}
 
-    /**
-     * Traitement de la requête GetProductsQuery.
-     *
-     * @return array{
-     *   data: ProductListDTO[],
-     *   total: int
-     * }
-     */
     public function handle(GetProductsQuery $query): array
     {
-        // Construction de la requête Doctrine
+        /**
+         * =========================
+         * 1. QUERY DATA (pagination)
+         * =========================
+         */
         $qb = $this->productRepository->createQueryBuilder('p');
 
         /**
-         * Liste des specifications appliquées
-         * dynamiquement selon les filtres.
+         * =========================
+         * 2. QUERY COUNT (séparée)
+         * =========================
+         */
+        $countQb = $this->productRepository->createQueryBuilder('p');
+
+        /**
+         * Specs dynamiques
          */
         $specs = [];
 
-        // Filtre par marque si fourni
         if ($query->brand) {
             $specs[] = new ProductBrandSpec($query->brand);
         }
 
-        // Filtre par plage de prix
         $specs[] = new ProductPriceRangeSpec(
             $query->minPrice,
             $query->maxPrice
         );
 
         /**
-         * Application des specifications combinées
-         * avec un AND logique.
+         * Application des specs sur LES DEUX requêtes
+         * (IMPORTANT pour cohérence data / count)
          */
         if (!empty($specs)) {
             $spec = AbstractSpecification::and(...$specs);
+
             $spec->apply($qb, 'p');
+            $spec->apply($countQb, 'p');
         }
 
         /**
-         * Pagination des résultats
+         * =========================
+         * 3. PAGINATION DATA
+         * =========================
          */
         $products = $qb
             ->setMaxResults($query->limit)
@@ -75,19 +68,19 @@ class GetProductsHandler
             ->getResult();
 
         /**
-         * Calcul du total (requête clonée)
-         *
-         * Important pour ne pas impacter la requête principale.
+         * =========================
+         * 4. COUNT SAFE (IMPORTANT)
+         * =========================
          */
-        $countQb = clone $qb;
-
-        $total = $countQb
-            ->select('COUNT(p)')
+        $total = (int) $countQb
+            ->select('COUNT(DISTINCT p.id)')
             ->getQuery()
             ->getSingleScalarResult();
 
         /**
-         * Transformation en DTO
+         * =========================
+         * 5. DTO TRANSFORMATION
+         * =========================
          */
         return [
             'data' => array_map(
@@ -99,7 +92,7 @@ class GetProductsHandler
                 ),
                 $products
             ),
-            'total' => (int) $total
+            'total' => $total
         ];
     }
 }
